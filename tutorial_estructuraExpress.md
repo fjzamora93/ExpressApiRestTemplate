@@ -18,3 +18,35 @@ PROYECTO
 app.js
 package-lock.json
 package.json
+
+
+# 2. Autogenerar un proyecto
+
+Sin embargo, para facilitar la creación de un proyecto se pueden utilizarse los siguientes comandos:
+
+```
+    npm install -g express-generator //instalación global
+    express myapp
+    cd myapp
+    npm install //  y desde aquí instalar dependencias
+```
+
+Estos comandos generarán esta estructura: 
+
+myapp/
+├── bin/
+│   └── www
+├── public/
+│   ├── images/
+│   ├── javascripts/
+│   └── stylesheets/
+├── routes/
+│   ├── index.js
+│   └── users.js
+├── views/
+│   ├── error.jade
+│   ├── index.jade
+│   └── layout.jade
+├── app.js
+├── package.json
+└── README.md
