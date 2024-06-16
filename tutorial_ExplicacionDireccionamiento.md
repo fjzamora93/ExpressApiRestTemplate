@@ -66,3 +66,78 @@ Bien, esto aparecía en la configuración original de nuestra app.js, donde indi
     app.set('views', 'views');
     
 ```
+
+
+### Separando routes y controllers
+
+Idealmente lo que a nosotros nos interesa es separar la parte lógica, de la gestión de las vistas. 
+Para ello, tendremos un nuevo directorio llamado controllers donde incorporaremos toda la parte lógica.
+
+Mientras que en routes, únicamente nos encargaremos de decir qué controlador se activa ante cada ruta.
+Vamos a verlo detenidamente:
+
+Veamos mejor con un ejemplo:
+
+    ```javascript
+    
+        //Nos encontramos en el archivo controller/miControlador.js
+
+        //Por convención, le vamos a poner get/post + nombre de la vista a la que se refiera el controlador o que quiera renderizar.
+        exports.getNombreVista(req, res, next) => {
+            const condicion = false;
+            let valor1 = condicion === true ? 'si' : 'no'; //en este caso la variable1 vale 'no'
+            res.render('ruta/vista', {
+                variable1: valor1,
+                variable2: 'valor2',
+                variable3: 100
+            });
+        };
+
+        exports.postNombreVistaConFormulario(req, res, next) => {
+            const campoFormulario = req.body.campoFormulario;
+            const otroCampo = req.body.otroCampo;
+            res.redirect('ruta/redirección')
+        }
+
+        //Como podemos comprobar, aquí estamos toda una lógica detrás de un control, que se activará cuando se acceda a la ruta indicada. 
+        //Pero para indicar qué ruta va a llamar a este controlador, tendremos que irnos a nuestro directorio routes.
+
+        //Nos encontramos en el archivo routes/shop.js
+
+        const micontrolador = require('controller/miControlador');
+        const router = express.Router();
+
+        router.get('ruta/que/queramos', miControlador.getNombreVista);
+        router.post('ruta/que/tenga/el/form', miControlador.postNombreVistaConFormulario);
+
+    ```
+
+### Models y Data
+
+Dentro de models podremos incluir todas las clases o modelos que queramos incluir en nuestra aplicación.
+
+Por su parte, dentro de data podemos incluir nuestra lógica para  almacenar contenido (por ejemplo, un JSON).
+
+En este punto de la aplicación, se utiliza un callback asíncrono donde nuestra clase product utiliza los métodos getProduct y save,
+para llamar a nuestro fichero json y aplicar los cambios pertinentes.
+
+Puesto que esta relación es asíncrona, utiliza una sintaxis bastante peculiar que en este momento no vamos a explicar.
+Vamos a esperar a que se expliquen las promesas (promises) que simplifican en gran medida este uso.
+
+
+
+
+```javascript
+
+
+```
+
+
+
+
+
+
+```javascript
+
+
+```
