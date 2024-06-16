@@ -1,31 +1,24 @@
-//Importaciones
 const path = require('path');
+
 const express = require('express');
 const bodyParser = require('body-parser');
+
+const errorController = require('./controllers/error');
+
 const app = express();
 
-//Configuración de la vista (usamos EJS)
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
-//Rutas
-const adminData = require('./routes/admin');
+const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 
-//Para la gestión de los datos
 app.use(bodyParser.urlencoded({ extended: false }));
-
-//Para acceder a los archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
-//Rutas
-app.use('/admin', adminData.routes);
+app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 
-//Manejo de errores
-app.use((req, res, next) => {
-  res.status(404).render('404', { pageTitle: 'Page Not Found' });
-});
+app.use(errorController.get404);
 
-//Escuchando en el puerto 3000 (o el que queramos)
 app.listen(3000);

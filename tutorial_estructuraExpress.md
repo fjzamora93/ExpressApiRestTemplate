@@ -36,6 +36,12 @@ Estos comandos generarán esta estructura:
 myapp/
 ├── bin/
 │   └── www
+|__controllers
+|   |__ toda la parte lógica
+|__models
+|   |__ los modelos que vayamos a usar para almacenar datos
+|__data
+|   |__ aquí almacenaríamos los datos (al menos provisionalmente)
 ├── public/
 │   ├── images/
 │   ├── javascripts/
