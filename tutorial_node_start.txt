@@ -14,14 +14,15 @@ Es muy recomendable instalar nodemon app.js en el proyecto
 
 
 
-2. Adicionalmente, es muy recomendable isntalar nodemon como dependencia del proyecto
+2. Adicionalmente, es muy recomendable isntalar nodemon y ejs como dependencia del proyecto
 
         npm install --save-dev nodemon
+        npm install --save ejs
 
     O lo podemos instalar globalmente -menos recomendable:
 
         npm install -g nodemon
-        npm install --save ejs
+        
 
 
 3. El siguiente paso es crear un fichero app.js, donde vamos a escribir nuestro código básico.

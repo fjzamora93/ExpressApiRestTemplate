@@ -56,3 +56,26 @@ myapp/
 ├── app.js
 ├── package.json
 └── README.md
+
+
+Viendo este puto fregado, lo mejor es tener un buen sistema para gestionar las rutas relativas. Aquí dejo el código más común par agestionar rutas:
+
+```javascript
+
+    // Para ir creando rutas relativas 
+    //mainModule+filenmae se refiere  a la ruta principal
+
+    //CUIDADO, HAY OTRA FORMA QUE ESTÁ DEPRECATED, ESTA ES LA CORRECTA
+    const rutaRecetas = path.join(
+    path.dirname(require.main.filename),
+    'data',
+    'recipe.json'
+);
+
+
+
+    // Para una ruta estática
+    app.use(express.static(path.join(__dirname, 'public')));
+
+
+```
