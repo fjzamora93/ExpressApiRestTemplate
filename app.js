@@ -1,5 +1,5 @@
+const mongoConnect = require('./util/database');
 const path = require('path');
-
 const express = require('express');
 const bodyParser = require('body-parser');
 
@@ -21,4 +21,8 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-app.listen(3000);
+mongoConnect(client => {
+    console.log(client);
+    app.listen(3000);
+  });
+  

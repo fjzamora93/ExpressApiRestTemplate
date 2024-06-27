@@ -7,7 +7,14 @@ Para tal fin, vamos a exportar nuestra conexión, que al importarla cada vez que
 
 ```javascript 
 
-const getDb = require('../util/database').getdb ??????
+    const mongoConnect = require('./util/database');
+    //resto del código
+
+    mongoConnect(client => {
+        console.log(client);
+        app.listen(3000);
+    });
+
 ```
 
 ## Utilizando la conexión en nuestros models

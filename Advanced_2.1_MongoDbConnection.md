@@ -4,10 +4,12 @@
 
 Atlas es el servicio en la nube de MongoDB. Antes de conectarnos desde nuestro código, será necesario realizar una correcta configuración de Atlas. Estos son los pasos:
 
+(Es posible que los siguientes pasos no funcionen... Igualmente no debe´ria haber mucho obstáculo)
+
 1. MongoDBUsers > 
     crear un nuevo usuario (configurado para Read and Write. Lo podríamos hacer admin, pero no es lo habitual).
 2. Security >
-    Añadir la Ip actual a las permitidas.
+    Añadir la Ip a nibgictual a las permitidas.
     **NOTA!!** Durante el despliegue, también habrá que incliur la IP del servidor.
 
 3. ConnectToCluster >
@@ -34,7 +36,7 @@ Atlas es el servicio en la nube de MongoDB. Antes de conectarnos desde nuestro c
 
     ```
 
-3. Configuación de utils/database (definimos la conexión)
+3. Configuación de utils/database (definimos la conexión). Luego en la propia plataforma de Mongo, te facilitan el código que tienes que utilizar, aunque es ligeramente distinto a este de aquí.
 
     ```javascript
     const mongodb = require('mongodb');
