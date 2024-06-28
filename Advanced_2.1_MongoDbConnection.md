@@ -22,40 +22,52 @@ Atlas es el servicio en la nube de MongoDB. Antes de conectarnos desde nuestro c
 
     >>npm install --save mongodb
 
-2. Configuración de app.js (establecemos la conexión)
+2. Configuración de app.js (establecemos la conexión y la vamos a dejar abierta)
 
     ```javascript
     //importamos la conexión que hemos configurado antes desde util/database
-    const mongoConnect = require('./util/database');
+    const mongoConnect = require('./util/database').mongoConnect;
 
     //establecemos la conexión
-    mongoConnect(client => {
-        console.log(client);
+    mongoConnect(() => {
         app.listen(3000);
     });
 
     ```
 
-3. Configuación de utils/database (definimos la conexión). Luego en la propia plataforma de Mongo, te facilitan el código que tienes que utilizar, aunque es ligeramente distinto a este de aquí.
+3. Configuación de utils/database (definimos la conexión). Luego en la propia plataforma de Mongo, te facilitan el código que tienes que utilizar, aunque es ligeramente distinto a este de aquí. Es posible que haya que actualizar esta información. De momento, es preferible usar el código que tengo aquí:
 
     ```javascript
+
     const mongodb = require('mongodb');
     const MongoClient = mongodb.MongoClient;
 
-    //Aquí vemos una promise con un callback
+    let _db;
+
     const mongoConnect = callback => {
     MongoClient.connect(
-        'mongodb+srv://maximilian:9u4biljMQc4jjqbe@cluster0-ntrwp.mongodb.net/test?retryWrites=true'
-    )
+        'mongodb+srv://elgatobarista:CONTRASEÑA@NombreDelCluster.tqgnl5u.mongodb.net/NombreDeLaColeccion?retryWrites=true&w=majority&appName=NombreDelCluster'
+        )
         .then(client => {
         console.log('Connected!');
-        callback(client);
+        _db = client.db();
+        callback();
         })
         .catch(err => {
         console.log(err);
+        throw err;
         });
     };
 
-    module.exports = mongoConnect;
+    const getDb = () => {
+    if (_db) {
+        return _db;
+    }
+    throw 'No database found!';
+    };
+
+    exports.mongoConnect = mongoConnect;
+    exports.getDb = getDb;
+
 
     ```

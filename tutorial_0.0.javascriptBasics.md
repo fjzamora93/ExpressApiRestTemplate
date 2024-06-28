@@ -1,5 +1,59 @@
 # Javascript Basics: conceptos básicos
 
+
+## Mapeos
+
+El método map() en JavaScript se utiliza para crear un nuevo array con los resultados de la llamada a una función proporcionada en cada elemento del array original.
+
+    ```javascript
+        let numbers = [1, 2, 3, 4, 5];
+
+        let squares = numbers.map(num => num * num);
+        console.log(squares); // [1, 4, 9, 16, 25]
+
+        //Mismo enfoque pero con un ForEach (es mejor mapear)
+        const arrayAuxiliar = [];
+        numbers.forEach(num => {
+            let cuadrado = num*num;
+            arrayAuxiliar.push(cuadrado);
+        });
+
+        //Tercer enfoque pero utilizando los índices
+        let numbers = [1, 2, 3, 4, 5];
+
+        numbers.forEach((num, index, arr) => {
+            arr[index] = num * num;
+        });
+
+console.log(numbers); // [1, 4, 9, 16, 25]
+        
+    ```
+
+## Operador de propagación [...array]
+
+El operador ... en JavaScript se llama operador de propagación (spread operator). Se utiliza para expandir elementos iterables, como arrays o cadenas. Cuando se utiliza con un array o un objeto, el operador de propagación crea una copia superficial de ese array u objeto. Esto es útil cuando quieres crear una nueva instancia de un array u objeto pero no quieres que la nueva instancia esté vinculada a la original.
+
+    ```javascript
+        let arr1 = [1, 2, 3];
+        let arr2 = [...arr1]; // crea una copia de arr1
+
+        arr2.push(4); // modifica arr2
+
+        console.log(arr1); // [1, 2, 3]
+        console.log(arr2); // [1, 2, 3, 4]
+
+
+        //O CON UN OBJETO
+
+        let obj1 = { a: 1, b: 2 };
+        let obj2 = { ...obj1 }; // crea una copia de obj1
+
+        obj2.c = 3; // modifica obj2
+
+        console.log(obj1); // { a: 1, b: 2 }
+        console.log(obj2); // { a: 1, b: 2, c: 3 }
+    ```
+
 ## 1. Operadores ternarios
 
 La mejor forma de explicar lo que es un operador ternario es recordar cómo se comporta en Python:
