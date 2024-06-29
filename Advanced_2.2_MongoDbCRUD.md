@@ -1,5 +1,8 @@
 # Interactuando con MongoDB (operacones CRUD)
 
+*NOTA* Normalmente vamos a ustilizar MONGOOSE y no este sistema. Pero igualmente lo dejo por aquí.
+____________________________________________________________________________________________________
+
 *sesion #200* MAEPANDO para recuperar una serie de objetos de un usuario y recuperarlos. Aquí es donde se trabaja con referencias internas y permite el anidamiento dentro de MongoDB, donde el objeto anidado lo que tiene es una referencia.
 
 Vamos a partir del siguiente código, donde tenemos una conexión ya estáblecida y hemos creado un objeto.
