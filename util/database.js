@@ -1,3 +1,5 @@
+//! DEPRECATED. ESTA ES LA FORMA CLÁSICA DE CONEXIÓN, YA QUE VAMOS A USAR MONGOOSE. ESTE ARCHIVO BIEN PODRÍA ELIMINARSE
+
 const mongodb = require('mongodb');
 const MongoClient = mongodb.MongoClient;
 
@@ -15,3 +17,5 @@ const mongoConnect = callback => {
 };
 
 module.exports = mongoConnect;
+
+//! BLOQUE OBSOLETO
