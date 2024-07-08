@@ -1,6 +1,19 @@
 # Javascript Basics: conceptos básicos
 
 
+## setTimeOut()
+
+La forma más sencilla de provocar un retraso en la ejecución del código es con el método setTimeOut.
+Sigue esta sintaxis, y simplemente es una función que toma como parámetro otra función + Tiempo de retraso (segundo parámetro)
+
+
+    ```javascript
+        setTimeout(() => {
+            console.log("Esto se ejecuta después de 2 segundos");
+          }, 2000);
+    ```
+
+
 ## Mapeos
 
 El método map() en JavaScript se utiliza para crear un nuevo array con los resultados de la llamada a una función proporcionada en cada elemento del array original.
