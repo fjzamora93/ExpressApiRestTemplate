@@ -5,6 +5,26 @@ Para ello, seguiremos los siguientes pasos:
 
 **NOTA** Puesto que son muchos componentes por separado, lo ideal es observar el código en su conjunto para ver cómo queda todo integrado.
 
+## Estructura base para manejar las sesiones
+
+controllers
+    |_auth.js -> el controller que se encarga de gestionar el login, logout y SignUp. Trabajarán con bcrypt para hashear las contraseñas.
+middleware
+    |_is-auth.js -> Un middleware cuya única función es redirigir el tráfico hacia el login si se requiere estar registrado. De lo contrario, Next.
+models
+    |_user.js -> El modelo de user habitual. Sin modificaciones de ningún tipo. 
+routes
+    |_auth.js -> Las rutas para las vistas de login y signup
+    |_lasDemasRutas -> ahora deben incluir como segundo parámetro el middleware de isAuth (importado previamente) si las queremos proteger.
+views
+    |_auth -> Vistas para los formularios de login y signup
+app.js
+    |_ Casi todos los cambios los vamos a encontrar aquí, donde empezaremos a trabajar con los siguientes módulso:
+        -express-session (para manejar las sesiones)
+        -MongoDBStore (para almacenar los datos de sesion)
+        -csrf (por seguridad)
+        -flash (para mensajes informativos)
+
 
 
 ## 1. Configurando el middleware de sesión 
@@ -152,7 +172,7 @@ Además, crearemos un controllers >> auth.js, donde tendremos todos los controll
 
 
 
-## 6. Optimizando las rutas para las sesiones
+## 5. Optimizando las rutas para las sesiones
 
 Se podría perfectamente implementar el req.session en cada controlador donde necesitemos datos de sesión (y siempre podríamos estar comprobando si la condición se cumple o no).
 Pero puesto que es un código poco eficiente, vamos a optimizar la gestión de rutas para que se encarguen de desviar el tráfico de forma más automática.
@@ -175,110 +195,117 @@ De otra manera, se aplicará el NEXT.
 
     module.exports = router;
 ```
+## 5. Proteger cada vista de forma individual
+
+El último paso será ir vista por vista comprobando el booleano isAuthenticated añadiendo bloques de <% if (isAuthenticated) { %>
+
+Puest que isAutehticated es una VARIBLE LOCAL, que ya configuramos para que estuviese disponible en todas la aplicación, no tendremos ningún problema en utilizarlo.
+
+```html
+    <% if (!isAuthenticated) { %> 
+        <div style="background-color: red; margin:auto"> NO REGISTRADO </div>
+    <% } else { %>
+        <div style="background-color: green; margin:auto"> REGISTRADO </div>
+    <% } %>
+```
 
 
 
-## 7. Tokenizando con CSRF 
+## CÓDIGO COMPLETO
 
-    >>npm install csurf
-
-`res.locals` es un objeto en Express.js que contiene variables de respuesta locales. Estas variables son específicas de la solicitud y estarán disponibles para la vista que se está renderizando.
-
-En este caso, `res.locals.isAuthenticated` y `res.locals.csrfToken` se están utilizando para pasar datos a la vista, que como en este caso es la propia APP, estarán disponibles en todas las vistas.
+El código completo de app.js se vería así:
 
 ```javascript
-    //APP.JS
-    const csrf = require('csurf');
+    const mongoose = require('mongoose');
+    const User = require('./models/user');
+    const errorController = require('./controllers/error');
 
+    const path = require('path');
+    const bodyParser = require('body-parser');
+
+    const express = require('express');
+
+    //MANEJO DE SESIONES (express-session + MongoDBsTORE + csrf + flash)
+    const session = require('express-session');
+    const MongoDBStore = require('connect-mongodb-session')(session);
+    const csrf = require('csurf');
+    const flash = require('connect-flash');
+
+    const MONGODB_URI =
+    'mongodb+srv://usuario:contraseña@cluster.tqgnl5u.mongodb.net/baseDeDatos?retryWrites=true&w=majority&appName=cluster';
+
+    const app = express();
+    const store = new MongoDBStore({
+        uri: MONGODB_URI,
+        collection: 'sessions'
+    });
     const csrfProtection = csrf();
 
+
+    //GESTOR DE VISTAS
+    app.set('view engine', 'ejs')
+    app.set('views', 'views');
+
+
+    //IMPORTACIÓN DE LAS RUTAS
+    const adminRoutes = require('./routes/admin')
+    const recipeRoutes = require('./routes/user')
+    const authRoutes = require('./routes/auth');
+
+    app.use(bodyParser.urlencoded({ extended:true }));
+    app.use(express.static(path.join(__dirname, 'public')));
+
+
+    //PASO 1: CONFIGURACIÓN DEL MIDDLEWARE DE SESIÓN
+    app.use(
+        session({
+        secret: 'my secret',
+        resave: false,
+        saveUninitialized: false,
+        store: store
+        })
+    );
     app.use(csrfProtection);
+    app.use(flash());
+
+
+    //PASO 2: Devolver al usuario AUTENTIFICADO EN NUESTRO REQ (si no lo está, se aplica el NEXT)
     app.use((req, res, next) => {
-        res.locals.isAuthenticated = req.session.isLoggedIn;
+        if (!req.session.user) {
+            return next();
+        }
+        User.findById(req.session.user._id)
+            .then(user => {
+            req.user = user; //Aquí es donde se devuelve al usuario
+            next();
+            })
+            .catch(err => console.log(err));
+    });
+
+    //PASO 3: Establecemos variables LOCALES que podrán ser accesibles desde las VISTAS
+    app.use((req, res, next) => {
+        res.locals.isAuthenticated = req.session.isLoggedIn; //Ahora esta variable es accesible desde la vista (en el controller auth>login -> req.session.isLoogedIn se pondrá en TRUE)
+        //Por las misma razón en el controller auth>logout, se va aplica destroy() sobre cualquier dato de la sesión.
         res.locals.csrfToken = req.csrfToken();
-    next();
+        next();
+    });
+
+    //
+    app.use('/', recipeRoutes);
+    app.use('/admin', adminRoutes);
+    app.use(authRoutes);
+
+    app.use(errorController.get404);
+
+
+    //Conexión a la base de datos
+    mongoose
+    .connect(MONGODB_URI)
+    .then(result => {
+        app.listen(3000);
+    })
+    .catch(err => {
+        console.log(err);
     });
 
 ```
-Ahora que hemos implementado el csrf, cada formulario deberá estar tokenizado.
-
-Básicamente, cada formulario debería incorporar este código:
-
-```html
-
-    <form>
-        <!-- Distintos campos del formulario-->
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button class="btn" type="submit">Login</button>
-    </form>
-
-```
-
-
-## 8. connect-flash: creando mensajes de aviso
-
->> npm install connect-flash
-
-connect-flash es un middleware para Express.js que se utiliza para mostrar mensajes flash. 
-Los mensajes flash son mensajes almacenados en la sesión, que se eliminan después de ser mostrados al usuario. 
-Son útiles para mostrar información de una sola vez, como mensajes de éxito o error después de una acción del usuario.
-
-```javascript
-    //APP.JS: Con estas dos líneas ya podremos implementar nuestros mensajes con el req.flash
-    const flash = require('connect-flash');
-    app.use(flash());
-
-    //CONTROLLERS: vamos a nuestro controller para implementar el mensaje.
-
-    exports.postLogin = (req, res, next) => {
-        const email = req.body.email;
-        const password = req.body.password;
-        User.findOne({ email: email })
-            .then(user => {
-            if (!user) {
-                req.flash('error', 'Invalid email or password.'); //Los mensajes se crean como una clave-valor. Luego podremos acceder al mensaje llamando a su clave.
-                return res.redirect('/login');
-            }
-            bcrypt
-                .compare(password, user.password)
-                .then(doMatch => {
-                if (doMatch) {
-                    req.session.isLoggedIn = true;
-                    req.session.user = user;
-                    return req.session.save(err => {
-                    console.log(err);
-                    res.redirect('/');
-                    });
-                }
-                req.flash('error', 'Invalid email or password.'); 
-                res.redirect('/login');
-                })
-                .catch(err => {
-                console.log(err);
-                res.redirect('/login');
-                });
-            })
-            .catch(err => console.log(err));
-    };
-
-```
-
-En cualquier momento del código, podemos acceder a nuestro error. Los errores funcionan como clave-valor:
-
-```javascript
-    exports.getLogin = (req, res, next) => {
-        let message = req.flash('error');
-        if (message.length > 0) {
-            message = message[0];
-        } else {
-            message = null;
-        }
-        res.render('auth/login', {
-            path: '/login',
-            pageTitle: 'Login',
-            errorMessage: message
-        });
-    };
-```
-
-*Nota*: Los mensajes de flash, cuando están vacíos, siguen siendo un array. Así que en caso de que no queremos que aparezca, será necesario comprobar que la longitud del array es mayor que 0. De cualquier otra forma, el mensaje seguirá apareciendo en pantalla (aunque en este caso sería una cadena de texto que no tendría nada).
