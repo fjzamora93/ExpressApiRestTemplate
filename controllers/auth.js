@@ -7,14 +7,7 @@ const { validationResult } = require('express-validator/check');
 
 const User = require('../models/user');
 
-const transporter = nodemailer.createTransport(
-  sendgridTransport({
-    auth: {
-      api_key:
-        // 'UNA CLAVE QUE SE GENERA'
-    }
-  })
-);
+//CÓDIGO QUITADO PORQUE INCLUYE CLAVE SECRETA
 
 exports.getLogin = (req, res, next) => {
   let message = req.flash('error');
