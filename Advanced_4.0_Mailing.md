@@ -14,7 +14,8 @@ Con ese paquete podremos empezar a gestionar los emails dentro de node.
 
 ## Uso
 
-Desde nuestro controller auth.js vamos a gestionarlo todo.
+Desde nuestro controller auth.js vamos a gestionarlo TODO.
+
 Únicamente vamos a modificar el código de auth.js para trabajar con los mails.
 
 Importamos nodemailer = requiere('nodemailer');
