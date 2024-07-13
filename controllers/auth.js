@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport(
   sendgridTransport({
     auth: {
       api_key:
-        'UNA CLAVE QUE SE GENERA'
+        // 'UNA CLAVE QUE SE GENERA'
     }
   })
 );
