@@ -1,4 +1,4 @@
-# Envío de mensajes
+# Envío de mensajes //SEGURAMETE HAY QUE BUSCAR OTRA ALTERNATIVA, ESTA PARECE QUE NO VAMO SA PODER USARLA
 
 Normalmente nunca vamos a utilizar un servidor propio para enviar mensajes, ya que es algo complejo, costoso y que requiere mucha seguridad.
 En su lugar, vamos a usar un servicio de un tercero.
