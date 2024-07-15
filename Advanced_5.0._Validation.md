@@ -5,12 +5,51 @@ Vamos a utilizar express-validator CHECK, del cuál vamos a traer check y body.
 
 Básicamente, para realizar la validación tocaremos las rutas y un poco los controllers:
 
-1. Añadir un ARRAY con todos los requisitos de VALIDACIÓN a la RUTA.
+Comenzaremos instalando el paquete:
+>> npm install --save express-validator
 
-Routes >> rutas post
-    Aquí modificaremos la ruta para añadir a aquellas routes de POST todas las validaciones que queramos hacer. Básicamente crearemos un ARRAY con todas las condiciones que deben cumplir cada uno de los campos del formulario del body. Tal que así:
+1. Importaremos el módulo para poder validar:
+    En nuestras rutas importaremos esto: 
+    >> const { body } = require('express-validator'); 
 
->>npm install --save express-validator
+    En nuestros controllers importaremos esto:
+    >> const { validationResult } = require('express-validator');
+
+
+2. Dentro de nuestra rutas, añadir un ARRAY con todos los requisitos de VALIDACIÓN a la RUTA. Básicamente es decirle a cada campo del formulario cómo se debe comportar. 
+
+
+3. Al haber añadido la validación a las rutas, ahora se podrán generar errores que utilizaremos en nuestro controller para realizar la validación. Así que ahora iremos a los controllers a configurarlos correctamente. Añadir una nueva constante a cada CONTROLLER que requiera VALIDACIÓN. Esta constante será algo así:
+
+    const errors = validationResult(req);
+
+4. El siguiente paso dentro de nuestro CONTROLLER es verificar si errors, que es un array, está vacío o no lo está. En caso de que no esté vacío, quiere decir que vamos a arrojar algún error, por lo que pasaremos un estado de error res.status(422) y renderizaremos la vista pero con información extra:
+
+    hasError: true
+    errorMessage: errors.array()
+
+5. Template HTML. Una vez completados estos pasos dentro de los controllers, podemos ir directamente a nuestra plantilla HTML a incluir las modificaciones pertinentes:
+
+    a. Recuperaremos los datos rellenados anteriormente por el usuario, así que añadimos la condición de si se está editando o si existe un error (booleano que definimos anteriormente).
+
+        value="<% if (editing || hasError) { %><%= item.valor %> <% } %>"
+
+    b. Mostraremos en pantalla el error, en caso de existir:
+
+        <% if (errorMessage) { %>
+            <% errorMessage.forEach(function(error) { %>
+              <div class="user-message user-message--error"><%= error.msg %></div>
+            <% }); %>
+        <% } %>
+    
+    c. Asignamos una clase para e.path. Opcionalmente, y para mejorar la experiencia de usuario, podemos definir una clase de CSS con el tipo de error. En este caso estaríamos buscando que el e.path sea el name, pero en la versión de Udemy se busca con e.param. 
+
+        class="<%= validationErrors.find(e => e.path === 'nombre-del-campo') ? 'invalid' : '' %>"
+
+    En este código asignaremos una clase cuando busque un error. Si el path (que es el campo del formulario, el name) aparece en el error, se asignará la clase 'invalid', que posteriormente podremos definir dentro de nuestro CSS. De cualquier otro modo, no habrá ninguna clase.
+
+## Modificación de la ruta
+
 ```javascript
 
     //En las últimas versiones lo podemos requerir directamente, sin incluir el /check
@@ -57,7 +96,7 @@ Routes >> rutas post
 Además, es una buena práctica limpiar el código poniéndolo en minúsculas, quitando espacios (trim), etc.
 
 
-2. Modificación de los controllers
+## Modificación de los controllers
 
 Aunque no es estrictamente necesario, modificaremos los controllers para dar cierta información al usuario sobre por qué ha fallado el envío del formulario. Dentro de este punto habrá que hacer varias implementaciones:
 
@@ -112,9 +151,27 @@ b. Guardar la información que ya ha enviado el usuario anteriormente y que el v
 
 ```
 
-3. Modificación del HTML
+## Modificación del HTML
 
 Dentro del HTML, deberemos añadir a cada campo del formulario el value="" correspondiente a aquello que ya se haya rellenado anteriormente en caso de que algo saliese mal y se redirigiese a la misma página.
 
 
 Eso quiere decir que cuando se accede a una página de forma normal, con el GET, será necesario pasar estos mismos parámetros aunque en este caso estarán vacíos, simplementa para que no de error la página.
+
+```html
+    <% if (errorMessage) { %>
+            <div class="user-message user-message--error"><%= errorMessage %></div>
+        <% } %>
+        <form class="product-form" action="/admin/<% if (editing) { %>edit-product<% } else { %>add-product<% } %>" method="POST">
+            <div class="form-control">
+                <label for="title">Title</label>
+                <input 
+                    class="<%= validationErrors.find(e => e.path === 'title') ? 'invalid' : '' %>"
+                    type="text" 
+                    name="title" 
+                    id="title" 
+                    value="<% if (editing || hasError) { %><%= product.title %><% } %>">
+            </div>
+
+
+```
