@@ -10,8 +10,11 @@ Básicamente, para realizar la validación tocaremos las rutas y un poco los con
 Routes >> rutas post
     Aquí modificaremos la ruta para añadir a aquellas routes de POST todas las validaciones que queramos hacer. Básicamente crearemos un ARRAY con todas las condiciones que deben cumplir cada uno de los campos del formulario del body. Tal que así:
 
+>>npm install --save express-validator
 ```javascript
-    const { check, body } = require('express-validator/check');
+
+    //En las últimas versiones lo podemos requerir directamente, sin incluir el /check
+    const { check, body } = require('express-validator');
 
 
     router.post(

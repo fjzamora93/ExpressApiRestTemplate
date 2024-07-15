@@ -12,7 +12,7 @@ const errorController = require('./controllers/error');
 const User = require('./models/user');
 
 const MONGODB_URI =
-  'mongodb+srv://maximilian:9u4biljMQc4jjqbe@cluster0-ntrwp.mongodb.net/shop';
+  'mongodb+srv://elgatobarista:CONTRASEÑA@rolgamesandstone.tqgnl5u.mongodb.net/?retryWrites=true&w=majority&appName=RolgameSandstone';
 
 const app = express();
 const store = new MongoDBStore({
