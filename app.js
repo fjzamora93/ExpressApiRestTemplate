@@ -10,18 +10,17 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
 const multer = require('multer');
-const helmet = require('helmet');
-const compression = require('compression');
-const morgan = require('morgan');
+// const helmet = require('helmet');
+// const compression = require('compression');
+// const morgan = require('morgan');
 
 const errorController = require('./controllers/error');
 const shopController = require('./controllers/shop');
 const isAuth = require('./middleware/is-auth');
 const User = require('./models/user');
 
-const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${
-  process.env.MONGO_PASSWORD
-}@cluster0-ntrwp.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}`;
+const MONGODB_URI = process.env.MONGO_URI;
+//mongodb+srv://elgatobarista:<password>@rolgamesandstone.tqgnl5u.mongodb.net/?retryWrites=true&w=majority&appName=RolgameSandstone
 
 const app = express();
 const store = new MongoDBStore({
@@ -38,7 +37,7 @@ const fileStorage = multer.diskStorage({
     cb(null, 'images');
   },
   filename: (req, file, cb) => {
-    cb(null, new Date().toISOString() + '-' + file.originalname);
+    cb(null, new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname);
   }
 });
 
@@ -66,9 +65,9 @@ const accessLogStream = fs.createWriteStream(
   { flags: 'a' }
 );
 
-app.use(helmet());
-app.use(compression());
-app.use(morgan('combined', { stream: accessLogStream }));
+// app.use(helmet());
+// app.use(compression());
+// app.use(morgan('combined', { stream: accessLogStream }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
@@ -139,11 +138,11 @@ app.use((error, req, res, next) => {
 mongoose
   .connect(MONGODB_URI)
   .then(result => {
-    // https
-    //   .createServer({ key: privateKey, cert: certificate }, app)
-    //   .listen(process.env.PORT || 3000);
-      app.listen(process.env.PORT || 3000);
+    console.log('Connected to MongoDB');
+    app.listen(process.env.PORT || 3000, () => {
+      console.log('Server is running on port 3000');
+    });
   })
   .catch(err => {
-    console.log(err);
+    console.log('ERROR', err);
   });
