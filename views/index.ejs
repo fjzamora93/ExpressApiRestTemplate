@@ -1,0 +1,64 @@
+<%- include('includes/navigation.ejs') %>
+
+<link rel="stylesheet" href="/style/index.css">
+
+<body>
+
+
+    <div style="text-align: center; margin: auto;">
+        <form action="/search" method="get" class="search-form">
+            <label for="categoria">Categoría:</label>
+            <select id="categoria" name="categoria" required>
+                <option value="todas">Todas</option>
+                <option value="reposteria">Repostería</option>
+                <option value="verano">Recetas de verano</option>
+                <option value="invierno">Recetas de invierno</option>
+                <option value="no-estacional">Todo el año</option>
+            </select>
+    
+            <div class="search-container">
+                <label for="search">Buscar:</label>
+                <input type="text" id="search" name="search" placeholder="Introduce tu búsqueda" 
+                <input type="text" id="search" name="search" placeholder="Introduce tu búsqueda" 
+                    value="<%= typeof search !== 'undefined' ? search : '' %>">
+                <span class="search-icon">
+                    <img src="https://img.icons8.com/material-outlined/24/000000/search.png" alt="Buscar">
+                </span>
+            </div>
+    
+            <input type="submit" value="Buscar">
+        </form>
+    </div>
+
+
+    <div class="container" id="main">
+        <% for (let receta of recetas) { %>
+            <div class="recipe-summary">
+                <a href="/recipe-details/<%= receta._id %>">
+                    <img src="<%= receta.image %>" alt="<%= receta.image %>">
+                </a>
+                <h2>
+                    <a href="/recipe-details/<%= receta._id %>">
+                        <%= receta.nombre %>
+                    </a>
+                </h2>
+                <p><b>Descripción:</b> <%= receta.descripcion %></p>
+                <p><b>Tiempo:</b> <%= receta.tiempo %></p>
+                <p><b>Dificultad:</b> <%= receta.dificultad %></p>
+
+                    <form method="post" action="/add-bookmark">
+                        <input type="hidden" name="idReceta" value = "<%= receta._id %>">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="submit" value="Favoritos" class="bakery-button">
+                    </form>
+                
+            </div>
+        <% } %>
+    </div>
+
+    <%- include('includes/pagination.ejs', {currentPage: currentPage, nextPage: nextPage, previousPage: previousPage, lastPage: lastPage, hasNextPage: hasNextPage, hasPreviousPage: hasPreviousPage}) %>
+
+<%- include('includes/footer') %>
+</body>
+</html>
+

@@ -1,140 +1,192 @@
-const path = require('path');
-const fs = require('fs');
-const https = require('https');
-
-const express = require('express');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const errorController = require('./controllers/error');
+const User = require('./models/user');
+const pdfRoutes = require('./routes/pdf');
+const multer = require('multer');
+const path = require('path');
+const bodyParser = require('body-parser');
+const imgur = require('imgur');
+const express = require('express');
+require('dotenv').config();
+
+//IMPORTACIÓN MANEJO SESIONES (Session + MongoDBsTORE + csrf + cookies + CORS)
+const app = express();
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
+const csrfProtection = csrf({ cookie: process.env.NODE_ENV === 'production' });
 const flash = require('connect-flash');
-const multer = require('multer');
-// const helmet = require('helmet');
-// const compression = require('compression');
-// const morgan = require('morgan');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
-const errorController = require('./controllers/error');
-const shopController = require('./controllers/shop');
-const isAuth = require('./middleware/is-auth');
-const User = require('./models/user');
+const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${
+  process.env.MONGO_PASSWORD
+}@rolgamesandstone.tqgnl5u.mongodb.net/bakery_app?retryWrites=true&w=majority&appName=RolgameSandstone`;
 
-const MONGODB_URI = process.env.MONGO_URI;
-//mongodb+srv://elgatobarista:<password>@rolgamesandstone.tqgnl5u.mongodb.net/?retryWrites=true&w=majority&appName=RolgameSandstone
-
-const app = express();
 const store = new MongoDBStore({
-  uri: MONGODB_URI,
-  collection: 'sessions'
+    uri: MONGODB_URI,
+    collection: 'sessions'
 });
-const csrfProtection = csrf();
 
-// const privateKey = fs.readFileSync('server.key');
-// const certificate = fs.readFileSync('server.cert');
+store.on('error', function(error) {
+    console.log('Error en el session store: ', error);
+});
 
+//Determinamos el tipo de almacenamiento de archivos con MULTER. En este caso se guardarán en 'images' y el nombre del archivo será la fecha y el nombre original
 const fileStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'images');
-  },
-  filename: (req, file, cb) => {
-    cb(null, new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname);
-  }
+    destination: (req, file, cb) => {
+      cb(null, 'images');  // Aquí se especifica el directorio donde se guardarán los archivos
+    },
+    filename: (req, file, cb) => {
+        cb(null, new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname);
+    }
 });
 
+//Determinamos el tipo de archivo que se puede subir
 const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === 'image/png' ||
-    file.mimetype === 'image/jpg' ||
-    file.mimetype === 'image/jpeg'
-  ) {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
+    if (
+      file.mimetype === 'image/png' ||
+      file.mimetype === 'image/jpg' ||
+      file.mimetype === 'image/jpeg' ||
+      file.mimetype === 'application/pdf'
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  };
 
-app.set('view engine', 'ejs');
+
+//GESTOR DE VISTAS
+app.set('view engine', 'ejs')
 app.set('views', 'views');
 
-const adminRoutes = require('./routes/admin');
-const shopRoutes = require('./routes/shop');
+
+//IMPORTACIÓN DE LAS RUTAS
+const adminRoutes = require('./routes/admin')
+const recipeRoutes = require('./routes/user')
 const authRoutes = require('./routes/auth');
 
-const accessLogStream = fs.createWriteStream(
-  path.join(__dirname, 'access.log'),
-  { flags: 'a' }
-);
 
-// app.use(helmet());
-// app.use(compression());
-// app.use(morgan('combined', { stream: accessLogStream }));
+//ORDEN 1: Middleware para parsear el body de las peticiones
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(
-  multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
-);
+//CORS: PERMITE EL ACCESO A LA API DESDE DIFERENTES DOMINIOS
+const allowedOrigins = [
+    'http://localhost:3000', 
+    'http://localhost:4200',
+    'https://fjzamora93.github.io',
+    'https://web-production-90fa.up.railway.app/',
+];
+const corsOptions = {
+    origin: function (origin, callback) {
+        if(!origin) return callback(null, true);
+        if(allowedOrigins.indexOf(origin) === -1 && !origin.includes('.railway.app')){
+            var msg = 'La política de CORS para este sitio no permite el acceso desde el origen especificado.';
+            return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With' ,'X-CSRF-TOKEN'],
+    credentials: true
+};
+app.use(cors(corsOptions));
+
+
+// ISAUTHENTICATED DEBE IR ANTES DE QUE ENTRE EN JUEGO MULTER PARA EVITAR ERRORES
+app.use((error, req, res, next) => {
+    res.status(500).render('500', {
+      pageTitle: 'Error!',
+      path: '/500',
+      isAuthenticated: req.session.isLoggedIn
+    });
+  });
+
+
+//Middleware para subir archivos con Multer a nuestro HOST.
+app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use(
-  session({
-    secret: 'my secret',
-    resave: false,
-    saveUninitialized: false,
-    store: store
-  })
-);
 
-app.use(flash());
 
-app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  next();
-});
+//PASO 1: CONFIGURACIÓN DEL MIDDLEWARE DE SESIÓN y COOKIES
+app.use(cookieParser()); 
+app.use(session({
+      secret: 'my secret',
+      resave: true,
+      proxy:  process.env.NODE_ENV === 'production',
+      saveUninitialized: true,
+      store: store,
+      cookie: {
+        maxAge: 48 * 60 * 60 * 1000, 
+        secure: process.env.NODE_ENV === 'production', 
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? '.railway.app' : 'localhost'
+      }
+    })
+  );
+  app.use(csrfProtection); 
+  app.use(flash());
 
-app.use((req, res, next) => {
-  // throw new Error('Sync Dummy');
-  if (!req.session.user) {
-    return next();
-  }
-  User.findById(req.session.user._id)
-    .then(user => {
+  //! Mensaje para verificar que el servidor está funcionando
+  app.use((req, res, next) => {
+    console.log('Received request:', req.method, req.path);
+    next();
+  });
+
+
+// DEVOLVER USUARIO AUTENTIFICADO
+app.use(async (req, res, next) => {
+    if (!req.session.user) {
+      return next();
+    }
+    try {
+      const user = await User.findById(req.session.user._id);
       if (!user) {
         return next();
       }
       req.user = user;
       next();
-    })
-    .catch(err => {
+    } catch (err) {
       next(new Error(err));
-    });
-});
-
-app.post('/create-order', isAuth, shopController.postOrder);
-
-app.use(csrfProtection);
+    }
+  });
+  
+// VARIABLES LOCALES, CSRF Y AUTENTICACIÓN
 app.use((req, res, next) => {
-  res.locals.csrfToken = req.csrfToken();
-  next();
+    if (!req.session.csrfToken) {
+        req.session.csrfToken = req.csrfToken();
+    }
+    res.locals.isAuthenticated = req.session.isLoggedIn;
+    res.locals.user = req.user; 
+    res.locals.csrfToken = req.csrfToken();
+    next();
 });
 
+// RUTA PARA OBTENER EL TOKEN CSRF EN LA API
+app.get('/api/csrf-token', (req, res) => {
+    try {
+        res.status(201).json({ csrfToken: req.session.csrfToken });
+    } catch (error) {
+        console.error('Error fetching CSRF token desde el backend:', error);
+        res.status(500).json({ error: 'Error fetching CSRF token desde el backend' });
+    }
+});
+
+//RUTAS DE LA APLICACIÓN GENERALES
+app.use('/', recipeRoutes);
 app.use('/admin', adminRoutes);
-app.use(shopRoutes);
+app.use(pdfRoutes);
 app.use(authRoutes);
 
+//ERROR HANDLING
 app.get('/500', errorController.get500);
-
 app.use(errorController.get404);
 
-app.use((error, req, res, next) => {
-  // res.status(error.httpStatusCode).render(...);
-  // res.redirect('/500');
-  res.status(500).render('500', {
-    pageTitle: 'Error!',
-    path: '/500',
-    isAuthenticated: req.session.isLoggedIn
-  });
-});
 
+//CONEXIÓN A LA BASE DE DATOS Y ARRANQUE DEL SERVIDOR
 mongoose
   .connect(MONGODB_URI)
   .then(result => {

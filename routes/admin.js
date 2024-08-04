@@ -1,54 +1,40 @@
-const path = require('path');
 
 const express = require('express');
-const { body } = require('express-validator/check');
-
 const adminController = require('../controllers/admin');
 const isAuth = require('../middleware/is-auth');
+const { body } = require('express-validator');
+
 
 const router = express.Router();
 
-// /admin/add-product => GET
-router.get('/add-product', isAuth, adminController.getAddProduct);
+router.get('/profile/:idCreator', adminController.getProfile);
 
-// /admin/products => GET
-router.get('/products', isAuth, adminController.getProducts);
+router.get('/add-recipe', isAuth, adminController.getAddRecipe);
+router.get('/edit-recipe/:recetaId', adminController.getEditRecipe);
 
-// /admin/add-product => POST
-router.post(
-  '/add-product',
-  [
-    body('title')
-      .isString()
-      .isLength({ min: 3 })
-      .trim(),
-    body('price').isFloat(),
-    body('description')
-      .isLength({ min: 5, max: 400 })
-      .trim()
-  ],
-  isAuth,
-  adminController.postAddProduct
-);
+router.post('/add', 
+    [
+        body('nombre')
+            .isString()
+            .isLength({min: 5})
+            .trim(),
+        body('descripcion').trim(),
+    ], 
+    isAuth,
+    adminController.postAddRecipe );
 
-router.get('/edit-product/:productId', isAuth, adminController.getEditProduct);
+router.post('/edit/',
+    [
+        body('nombre')
+            .isString()
+            .isLength({min: 5})
+            .trim(),
+        body('descripcion').trim(),
+    ], 
+    isAuth,
+    adminController.postEditRecipe );
+    
+router.post('/delete/:recetaId', adminController.postDeleteRecipe);
 
-router.post(
-  '/edit-product',
-  [
-    body('title')
-      .isString()
-      .isLength({ min: 3 })
-      .trim(),
-    body('price').isFloat(),
-    body('description')
-      .isLength({ min: 5, max: 400 })
-      .trim()
-  ],
-  isAuth,
-  adminController.postEditProduct
-);
-
-router.delete('/product/:productId', isAuth, adminController.deleteProduct);
 
 module.exports = router;

@@ -1,212 +1,206 @@
+
+const RecetaMdb = require('../models/recipeMdb'); 
+const { validationResult } = require('express-validator');
+const fileHelper = require('../util/file');
+const { uploadImageToImgur } = require('../util/file');
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');  // Asegúrate de importar path
+const User = require('../models/user');
+const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
 
-const fileHelper = require('../util/file');
 
-const { validationResult } = require('express-validator/check');
+exports.getProfile = async (req, res, next) => {
+    try {
+        const creator = await User.findById(req.params.idCreator).populate('recipes');
+        const recuentoRecetas = creator.recipes.length;
 
-const Product = require('../models/product');
+        //Gracias a que hemos populado, no será necesario ahora buscar también las recetas y no es necesaria esta línea
+        // const recipes = await RecetaMdb.find({creator: usuario._id});
+        
+        let isOwner = false;
+        if (req.session.user) {
+            console.log('req.session.user._id:', req.session.user._id);
+            isOwner = req.session.user._id.toString() === creator._id.toString() ; 
+        }
 
-exports.getAddProduct = (req, res, next) => {
-  res.render('admin/edit-product', {
-    pageTitle: 'Add Product',
-    path: '/admin/add-product',
-    editing: false,
-    hasError: false,
-    errorMessage: null,
-    validationErrors: []
-  });
-};
+        res.render('auth/profile', {
+            creator:creator,
+            isOwner: isOwner,
+            recuentoRecetas: recuentoRecetas
+        })
+    } catch(err) {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+    }
+}
 
-exports.postAddProduct = (req, res, next) => {
-  const title = req.body.title;
-  const image = req.file;
-  const price = req.body.price;
-  const description = req.body.description;
-  if (!image) {
-    return res.status(422).render('admin/edit-product', {
-      pageTitle: 'Add Product',
-      path: '/admin/add-product',
-      editing: false,
-      hasError: true,
-      product: {
-        title: title,
-        price: price,
-        description: description
-      },
-      errorMessage: 'Attached file is not an image.',
-      validationErrors: []
-    });
-  }
-  const errors = validationResult(req);
 
-  if (!errors.isEmpty()) {
-    console.log(errors.array());
-    return res.status(422).render('admin/edit-product', {
-      pageTitle: 'Add Product',
-      path: '/admin/add-product',
-      editing: false,
-      hasError: true,
-      product: {
-        title: title,
-        price: price,
-        description: description
-      },
-      errorMessage: errors.array()[0].msg,
-      validationErrors: errors.array()
-    });
-  }
-
-  const imageUrl = image.path;
-
-  const product = new Product({
-    // _id: new mongoose.Types.ObjectId('5badf72403fd8b5be0366e81'),
-    title: title,
-    price: price,
-    description: description,
-    imageUrl: imageUrl,
-    userId: req.user
-  });
-  product
-    .save()
-    .then(result => {
-      // console.log(result);
-      console.log('Created Product');
-      res.redirect('/admin/products');
-    })
-    .catch(err => {
-      // return res.status(500).render('admin/edit-product', {
-      //   pageTitle: 'Add Product',
-      //   path: '/admin/add-product',
-      //   editing: false,
-      //   hasError: true,
-      //   product: {
-      //     title: title,
-      //     imageUrl: imageUrl,
-      //     price: price,
-      //     description: description
-      //   },
-      //   errorMessage: 'Database operation failed, please try again.',
-      //   validationErrors: []
-      // });
-      // res.redirect('/500');
-      const error = new Error(err);
-      error.httpStatusCode = 500;
-      return next(error);
-    });
-};
-
-exports.getEditProduct = (req, res, next) => {
-  const editMode = req.query.edit;
-  if (!editMode) {
-    return res.redirect('/');
-  }
-  const prodId = req.params.productId;
-  Product.findById(prodId)
-    .then(product => {
-      if (!product) {
-        return res.redirect('/');
-      }
-      res.render('admin/edit-product', {
-        pageTitle: 'Edit Product',
-        path: '/admin/edit-product',
-        editing: editMode,
-        product: product,
+exports.getAddRecipe = async (req, res, next) =>{
+    res.render('edit-recipe', {
+        usuario: req.session.user,
+        editing : false,
         hasError: false,
         errorMessage: null,
         validationErrors: []
-      });
     })
-    .catch(err => {
-      const error = new Error(err);
-      error.httpStatusCode = 500;
-      return next(error);
-    });
+}
+
+exports.postAddRecipe = async (req, res, next) => {
+    const { nombre, descripcion, ingredientes, instrucciones, tiempo, dificultad, categoria } = req.body;
+    const image = req.file;
+
+    const creatorId = req.session.user._id;
+    console.log('creatorId:', creatorId, typeof creatorId);
+
+    const renderError = (message, validationErrors = []) => {
+        res.status(422).render('edit-recipe', {
+            editing: false,
+            hasError: true,
+            receta: { nombre, descripcion, ingredientes, instrucciones, tiempo, dificultad, categoria, creatorId },
+            errorMessage: message,
+            validationErrors
+        });
+    };
+
+    if (!image) {
+        return renderError('No se ha introducido una imagen');
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors.array());
+        return renderError(errors.array().map(error => ({ field: error.param, msg: error.msg })), errors.array());
+    }
+
+    try {
+        const imgurLink = await uploadImageToImgur(image.path);
+  
+        console.log('Imagen subida a Imgur:', imgurLink);
+
+        const recipeMg = new RecetaMdb({
+            nombre, descripcion, ingredientes, instrucciones, tiempo, dificultad, categoria, 
+            image: imgurLink, 
+            creator:creatorId
+        });
+
+        const savedRecipe = await recipeMg.save();
+        console.log('Receta guardada con éxito:', savedRecipe);
+
+        // Añadir la referencia de la receta al array de recetas del usuario
+        const user = await User.findById(creatorId);
+        console.log('ERROR DE USUARIO:', user)
+        user.recipes.push(savedRecipe._id);
+        await user.save();
+        res.redirect('/');
+
+    } catch (error) {
+        console.error('Error al cargar la imagen a Imgur:', error);
+        renderError('Error al cargar la imagen a Imgur');
+    }
 };
 
-exports.postEditProduct = (req, res, next) => {
-  const prodId = req.body.productId;
-  const updatedTitle = req.body.title;
-  const updatedPrice = req.body.price;
-  const image = req.file;
-  const updatedDesc = req.body.description;
-
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    return res.status(422).render('admin/edit-product', {
-      pageTitle: 'Edit Product',
-      path: '/admin/edit-product',
-      editing: true,
-      hasError: true,
-      product: {
-        title: updatedTitle,
-        price: updatedPrice,
-        description: updatedDesc,
-        _id: prodId
-      },
-      errorMessage: errors.array()[0].msg,
-      validationErrors: errors.array()
-    });
-  }
-
-  Product.findById(prodId)
-    .then(product => {
-      if (product.userId.toString() !== req.user._id.toString()) {
-        return res.redirect('/');
-      }
-      product.title = updatedTitle;
-      product.price = updatedPrice;
-      product.description = updatedDesc;
-      if (image) {
-        fileHelper.deleteFile(product.imageUrl);
-        product.imageUrl = image.path;
-      }
-      return product.save().then(result => {
-        console.log('UPDATED PRODUCT!');
-        res.redirect('/admin/products');
-      });
-    })
-    .catch(err => {
-      const error = new Error(err);
-      error.httpStatusCode = 500;
-      return next(error);
-    });
+exports.getEditRecipe = (req, res, next) => {
+    const recetaId = req.params.recetaId;
+    const editing = true;
+    RecetaMdb.findById(recetaId)
+    .then(receta => {
+        res.render('edit-recipe' , {
+            receta : receta,
+            editing : editing,
+            hasError: false,
+            errorMessage: null,
+            validationErrors: [],
+            usuario: req.session.user // Creator
+        });
+        }
+    )
+    .catch(err => console.log(err))
 };
 
-exports.getProducts = (req, res, next) => {
-  Product.find({ userId: req.user._id })
-    // .select('title price -_id')
-    // .populate('userId', 'name')
-    .then(products => {
-      console.log(products);
-      res.render('admin/products', {
-        prods: products,
-        pageTitle: 'Admin Products',
-        path: '/admin/products'
-      });
-    })
-    .catch(err => {
-      const error = new Error(err);
-      error.httpStatusCode = 500;
-      return next(error);
-    });
-};
+exports.postDeleteRecipe = async (req, res, next) => {
+    const recetaId = req.params.recetaId;
+    const user = req.session.user;
 
-exports.deleteProduct = (req, res, next) => {
-  const prodId = req.params.productId;
-  Product.findById(prodId)
-    .then(product => {
-      if (!product) {
-        return next(new Error('Product not found.'));
-      }
-      fileHelper.deleteFile(product.imageUrl);
-      return Product.deleteOne({ _id: prodId, userId: req.user._id });
-    })
-    .then(() => {
-      console.log('DESTROYED PRODUCT');
-      res.status(200).json({ message: 'Success!' });
-    })
-    .catch(err => {
-      res.status(500).json({ message: 'Deleting product failed.' });
-    });
+    try {
+        // Delete the recipe
+        const result = await RecetaMdb.findByIdAndDelete(recetaId);
+        console.log(result);
+
+        // Remove the reference to the recipe from the user's recipes array
+        const userIndex = user.recipes.indexOf(recetaId);
+        if (userIndex > -1) {
+            user.recipes.splice(userIndex, 1);
+            await user.save();
+        }
+
+        res.redirect('/');
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+exports.postEditRecipe = async (req, res, next) => {
+    const { nombre, descripcion, ingredientes, instrucciones, tiempo, dificultad, categoria, idReceta } = req.body;
+    const id = idReceta.trim();
+    const creator = req.session.user._id;
+    const image = req.file;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).render('edit-recipe', {
+            editing: true,
+            hasError: true,
+            receta: { _id: id, nombre, descripcion, ingredientes, instrucciones, tiempo, dificultad, categoria, creator },
+            errorMessage: errors.array(),
+            validationErrors: errors.array()
+        });
+    }
+
+    try {
+        const recipe = await RecetaMdb.findById(id);
+        if (!recipe) {
+            return res.status(404).send('No recipe found with the provided id');
+        }
+
+        recipe.nombre = nombre;
+        recipe.descripcion = descripcion;
+        recipe.ingredientes = ingredientes;
+        recipe.instrucciones = instrucciones;
+        recipe.tiempo = tiempo;
+        recipe.dificultad = dificultad;
+        recipe.categoria = categoria;
+        recipe.creator = creator;
+
+        if (image) {
+            const imgurLink = await uploadImageToImgur(image.path);
+            if (recipe.image) {
+                fileHelper.deleteFile(recipe.image);
+            }
+            recipe.image = imgurLink;
+        }
+        const savedRecipe = await recipe.save();
+
+
+        const user = await User.findById(creator);
+        if(! user.recipes.includes(savedRecipe._id)){
+            user.recipes.push(savedRecipe._id);
+            await user.save();
+            console.log('Receta añadida al usuario:', user);
+        }
+        
+        res.redirect('/');
+
+    } catch (err) {
+        console.error('Error en postEditRecipe:', err);
+        res.status(500).render('edit-recipe', {
+            editing: true,
+            hasError: true,
+            receta: { _id: id, nombre, descripcion, ingredientes, instrucciones, tiempo, dificultad, categoria, creator },
+            errorMessage: 'Error al actualizar la receta',
+            validationErrors: []
+        });
+    }
 };
