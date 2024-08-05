@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const errorController = require('./controllers/error');
 const User = require('./models/user');
 const pdfRoutes = require('./routes/pdf');
+const postRoutes = require('./routes/post');
 const multer = require('multer');
 const path = require('path');
 const bodyParser = require('body-parser');
@@ -21,7 +22,7 @@ const cookieParser = require('cookie-parser');
 
 const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${
   process.env.MONGO_PASSWORD
-}@rolgamesandstone.tqgnl5u.mongodb.net/bakery_app?retryWrites=true&w=majority&appName=RolgameSandstone`;
+}@rolgamesandstone.tqgnl5u.mongodb.net/testing?retryWrites=true&w=majority&appName=RolgameSandstone`;
 
 const store = new MongoDBStore({
     uri: MONGODB_URI,
@@ -178,6 +179,7 @@ app.get('/api/csrf-token', (req, res) => {
 //RUTAS DE LA APLICACIÓN GENERALES
 app.use('/', recipeRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api', postRoutes);
 app.use(pdfRoutes);
 app.use(authRoutes);
 

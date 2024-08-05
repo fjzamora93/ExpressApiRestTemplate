@@ -57,39 +57,7 @@ body {
     background: linear-gradient(to right, #ff3700, #a70909);
 }
 
-header {
-    background-color: #f8b400;
-    color: white;
-    padding: 10px 0;
-    text-align: center;
-}
 
-nav {
-    background-color: #333;
-}
-
-nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-}
-
-nav ul li {
-    margin: 0 15px;
-}
-
-nav ul li a {
-    color: white;
-    text-decoration: none;
-    padding: 14px 20px;
-    display: block;
-}
-
-nav ul li a:hover {
-    background-color: #575757;
-}
 
 .container {
     margin-bottom: 200px;
@@ -156,7 +124,7 @@ footer {
 
 #pagination a {
     text-decoration: none;
-    color: #c3b236;
+    color: #adadad;
     padding: 0.5rem;
     border: 1px solid #00695c;
     margin: 0 1rem;

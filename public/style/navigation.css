@@ -1,6 +1,45 @@
-/* Archivo: styles.css */
+header {
+    background-color: #a3a3a3;
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+}
 
-/* Reset y Estilo Básico del Menú */
+/* Estilo para el contenedor del menú */
+nav {
+    background-color: #414141;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    margin-bottom: 50px;
+}
+
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 14px 20px;
+    display: block;
+}
+
+nav ul li a:hover {
+    background-color: #575757;
+}
+
 ul {
     list-style: none;
     padding: 0;
@@ -20,17 +59,7 @@ a {
     display: block;
 }
 
-/* Estilo para el contenedor del menú */
-nav {
-    background-color: #414141;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    margin-bottom: 50px;
-}
+
 
 /* Estilo para los elementos del menú */
 .main-header__item {

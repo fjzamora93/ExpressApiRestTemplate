@@ -1,0 +1,81 @@
+<link rel="stylesheet" href="/style/form.css">
+<script src="/javascript/scripts.js"></script>
+
+<body>
+    <%- include('includes/navigation.ejs') %>
+
+    <div class="container">
+        <% if (errorMessage) { %>
+            <div class="user-message user-message--error"><%= errorMessage %></div>
+        <% } %>
+
+        <h2>Añadir Nuevo Post</h2>
+        <form action="/admin/<% if (editing) { %>edit<% } else { %>add<% } %>" method="post" enctype="multipart/form-data">
+
+            <!-- Ocultamos la id para después usarla -->
+            <label for="idPost" hidden>Id:</label>
+            <input type="hidden" id="idPost" name="idPost" value="<% if (editing) { %><%= post._id %><% } %>">
+
+            <label for="title">Título del Post:</label>
+            <input type="text" id="title" name="title" value="<% if (editing || hasError) { %><%= post.title %><% } %>" class="<%= validationErrors.find(e => e.path === 'title') ? 'invalid' : '' %>" required>
+
+            <label for="subtitle">Subtítulo del Post:</label>
+            <input type="text" id="subtitle" name="subtitle" value="<% if (editing || hasError) { %><%= post.subtitle %><% } %>" class="<%= validationErrors.find(e => e.path === 'subtitle') ? 'invalid' : '' %>">
+
+            <label for="content">Descripción:</label>
+            <textarea id="content" name="content" rows="5" required><% if (editing || hasError) { %><%= post.content.trim() %><% } %></textarea>
+
+            <label for="list">Listado:</label>
+            <div id="bloque-lista">
+                <button type="button" onclick="addClick(this, 'list')" class="button-add" id="ingr-button">+</button>
+                <% if (editing || hasError) { %>
+                    <% for (let item of post.list) { %>
+                        <input type="text" name="list[]" value="<%= item %>">
+                        <button type="button" onclick="removeClick(this)" class="button-delete" id="ingr-button">-</button>
+                    <% } %>
+                <% } else { %>
+                    <input type="text" name="list[]" value="" placeholder="Introduce un item a la lista">
+                <% } %>
+            </div>
+
+            <label for="category">Categoría:</label>
+            <select name="category" id="categoria">
+                <option value="1">Categoría 1</option>
+                <option value="2">Categoría 2</option>
+                <option value="3">Categoria 3</option>
+                <option value="4">Categoría 4</option>
+            </select> <br><br>
+
+
+            <label for="imageUrl">Adjunto:</label>
+            <input type="file" name="imageUrl" id="imageUrl"><br><br><br>
+
+            <label for="attachedFile">Adjunto:</label>
+            <input type="file" name="attachedFile" id="attachedFile"><br><br><br>
+
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            
+            <% if (editing) { %>
+                <input type="submit" value="Actualizar Post">
+                
+            <% } else { %>
+                <input type="submit" value="Añadir Post">
+            <% } %>
+        </form>
+
+        <% if (editing) { %>
+            <form action="/admin/delete/<%= post._id %>" method="post" style="display:inline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="submit" value="Borrar Post" class="button-delete">
+            </form>
+        <% } %>
+    
+    
+    </div>
+            
+        
+
+    <%- include('includes/footer') %>
+
+</body>
+</html>

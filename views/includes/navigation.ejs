@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recetas de Repostería</title>
+    <title>Template API </title>
     <link rel="stylesheet" href="/style/navigation.css">
     <link rel="stylesheet" href="/style/main.css">
     <link rel="stylesheet" href="/style/auth.css">
@@ -12,7 +12,7 @@
 
 
     <header>
-        <h1>Recetas</h1>
+        <h1>Template Express 4.19.2 API</h1>
     </header>
 
     <nav>
@@ -31,9 +31,9 @@
         <ul>
             <li><a href="/">Inicio</a></li>
             <% if (isAuthenticated) { %>
-                <li><a href="/admin/add-recipe">Añadir receta</a></li>
+                <li><a href="/admin/add-recipe">Añadir Post</a></li>
             <% } %>
-            <li><a href="/bookmark">Recetas archivadas</a></li>
+            <li><a href="/bookmark">Post Archivados</a></li>
             <li><a href="#">Contacto</a></li>
             <% if (!isAuthenticated) { %>
                 <li class="main-header__item"><a href="/login">Login</a></li>
