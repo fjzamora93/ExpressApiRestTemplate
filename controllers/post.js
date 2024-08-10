@@ -1,19 +1,20 @@
 const postModel = require('../models/post');
 
 
-let posts = [
+let postSample = [
     { _id: "1", title: 'First Post', content: 'Lorem impsum' },
     { _id: "2", title: 'Second Post', content: 'quid amet' },
     { _id: "3", title: 'Third Post', content: 'Texto falso' }
   ];
 
-exports.getPosts = (req, res, next) => {
-    console.log('Posts:', posts);
+exports.getPosts = async (req, res, next) => {
+    const posts = await postModel.find();
+    console.log('PostList:', posts);
     res.json({ message: 'Posts fetched successfully!', posts });
 };
 
 
-exports.postPosts = (req, res, next) => {
+exports.postPosts = async (req, res, next) => {
     try {
         // Verifica si el CSRF Token está presente
         const csrfToken = req.headers['x-csrf-token'];
@@ -28,17 +29,15 @@ exports.postPosts = (req, res, next) => {
         }
 
         console.log('Request Body:', req.body);
-        const { _id, title, content } = req.body;
+        const { title, content } = req.body;
 
 
         // Crea un nuevo post y lo agrega a la lista de posts
-        const newPost = { _id, title, content };
-        posts.push(newPost);
-
-        // Responde con éxito
+        const newPost = new postModel({ title, content });
+        newPost.save();
         res.status(201).json({ message: 'Post added successfully!', post: newPost });
+
     } catch (error) {
-        // Maneja cualquier error inesperado
         console.error('An error occurred:', error);
         res.status(500).json({ error: 'An internal server error occurred' });
     }
@@ -71,7 +70,7 @@ exports.putPost = (req, res, next) => {
             return res.status(404).json({ error: 'Post not found' });
         }
 
-        if (!req.body || !req.body.title || !req.body.content) {
+        if (!req.body || !req.body.title ) {
             return res.status(400).json({ error: 'Title and content are required' });
         }
 

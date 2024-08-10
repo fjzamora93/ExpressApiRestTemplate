@@ -28,12 +28,12 @@ const postSchema = mongoose.Schema({
     },
     category: {
         type: String,
-        required: true,
+        required: false,
     },
     creator:{
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
     }
 });
 
