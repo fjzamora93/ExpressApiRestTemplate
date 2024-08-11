@@ -9,7 +9,6 @@ let postSample = [
 
 exports.getPosts = async (req, res, next) => {
     const posts = await postModel.find();
-    console.log('PostList:', posts);
     res.json({ message: 'Posts fetched successfully!', posts });
 };
 
@@ -44,45 +43,34 @@ exports.postPosts = async (req, res, next) => {
 }
 
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
     console.log('DELETE request received for postId en la API:', req.params.postId);
     try {
         const postId = req.params.postId;
-        const postIndex = posts.findIndex(post => post._id === postId);
-        if (postIndex < 0) {
-            return res.status(404).json({ error: 'Post not found' });
-        }
-
-        posts.splice(postIndex, 1);
-        console.log('Posts:', posts);
-        res.status(200).json({ message: 'Post deleted successfully!' });
+        const deletedPost = await postModel.findByIdAndDelete(postId);
+        res.status(200).json({ message: `Post ${deletedPost} deleted successfully!` });
     } catch (error) {
         console.error('An error occurred:', error);
         res.status(500).json({ error: 'An internal server error occurred' });
     }
 }
 
-exports.putPost = (req, res, next) => {
+exports.putPost = async (req, res, next) => {
+    console.log('ACTUALIZANDO EN EL BACKEND:', req.params.postId);
     try {
-        const postId = req.params.postId;
-        const postIndex = posts.findIndex(post => post.title === postId);
-        if (postIndex < 0) {
-            return res.status(404).json({ error: 'Post not found' });
-        }
-
-        if (!req.body || !req.body.title ) {
+        if (!req.body || !req.body.title || !req.body.content) {
             return res.status(400).json({ error: 'Title and content are required' });
         }
+        
+        let updatedData = { 
+            title: req.body.title, 
+            content: req.body.content 
+        };
 
-        const { title, content } = req.body;
-        if (typeof title !== 'string' || typeof content !== 'string') {
-            return res.status(400).json({ error: 'Title and content must be strings' });
-        }
-
-        posts[postIndex] = { title, content };
-        console.log('Posts:', posts);
-        res.status(200).json({ message: 'Post updated successfully!', post: posts[postIndex] });
+        const updatedPost = await postModel.findByIdAndUpdate(req.params.postId, updatedData, { new: true });
+        console.log('Updated Post:', updatedPost);
+        res.status(200).json({ message: 'Post updated successfully!',updatedPost });
     } catch (error) {
         console.error('An error occurred:', error);
         res.status(500).json({ error: 'An internal server error occurred' });
-    }};
+}};
